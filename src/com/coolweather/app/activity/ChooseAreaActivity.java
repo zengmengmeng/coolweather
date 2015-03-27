@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -62,13 +63,18 @@ public class ChooseAreaActivity extends Activity {
 	 * 当前选中的级别
 	 */
 	private int currentLevel;
+	/**
+	 * 是否从WeatherActivity 中 跳 转过来。
+	 */
+	private boolean isFromWeatherActivity;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		isFromWeatherActivity = getIntent().getBooleanExtra("from_weather_activity", false);
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(this);
-		if (prefs.getBoolean("city_selected", false)) {
+		if (prefs.getBoolean("city_selected", false)&& !isFromWeatherActivity) {
 			Intent intent = new Intent(this, WeatherActivity.class);
 			startActivity(intent);
 			finish();
@@ -172,13 +178,16 @@ public class ChooseAreaActivity extends Activity {
 					+ ".xml";
 		} else {
 			address = "http://www.weather.com.cn/data/list3/city.xml";
+			// address = "https://www.baidu.com/?tn=25017023_4_dg";
 		}
 		showProgressDialog();
 		HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
 			@Override
 			public void onFinish(String response) {
+
 				boolean result = false;
 				if ("province".equals(type)) {
+					// Log.d("response", response.toString());
 					result = Utility.handleProvincesResponse(coolWeatherDB,
 							response);
 				} else if ("city".equals(type)) {
@@ -196,6 +205,7 @@ public class ChooseAreaActivity extends Activity {
 							closeProgressDialog();
 							if ("province".equals(type)) {
 								queryProvinces();
+								// Log.d("response", "11111111111111111111111");
 							} else if ("city".equals(type)) {
 								queryCities();
 							} else if ("county".equals(type)) {
@@ -212,6 +222,7 @@ public class ChooseAreaActivity extends Activity {
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
+						// Log.d("false", "000000000000000000000000000");
 						closeProgressDialog();
 						Toast.makeText(ChooseAreaActivity.this, "加载失败",
 								Toast.LENGTH_SHORT).show();
@@ -252,6 +263,10 @@ public class ChooseAreaActivity extends Activity {
 		} else if (currentLevel == LEVEL_CITY) {
 			queryProvinces();
 		} else {
+			if (isFromWeatherActivity) {
+				Intent intent = new Intent(this, WeatherActivity.class);
+				startActivity(intent);
+				}
 			finish();
 		}
 	}
